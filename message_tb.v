@@ -6,6 +6,7 @@ module message_tb;
                 clk = 1'b0;
                 rst = 1'b1;
                 repeat(4) #10 clk = ~clk;
+                new_rx_data = 0;
                 rst = 1'b0;
 	        tx_busy = 1'd0;
 	        forever #10 clk = ~clk; // generate a clock
@@ -79,33 +80,30 @@ module message_tb;
 
 
 
-  reg clk, rst;
-  wire [7:0] tx_data;
-  wire new_tx_data;
-  reg tx_busy, new_rx_data;
-  reg [7:0] rx_data;
-  //reg [0:7] data;
-  wire [3:0] addr;
-  wire[3:0] counter;
-  wire bytes;
-  wire [7:0] data;
-  wire state;
+        reg clk, rst;
+        wire [7:0] tx_data;
+        wire new_tx_data;
+        reg tx_busy, new_rx_data;
+        reg [7:0] rx_data;
+        //reg [0:7] data;
+        wire [3:0] addr;
+        wire bytes;
+        wire [7:0] data;
+        wire state;
 
 
 
 
 
- message_printer message_printer1 (
-        .clk(clk),
-        .rst(rst),
-        .tx_data(tx_data),
-        .new_tx_data(new_tx_data),
-        .tx_busy(tx_busy),
-        .new_rx_data(new_rx_data),
-        .rx_data(rx_data),
-	.addr(addr),
-	.counter(counter)
-
+        message_printer message_printer1 (
+                .clk(clk),
+                .rst(rst),
+                .tx_data(tx_data),
+                .new_tx_data(new_tx_data),
+                .tx_busy(tx_busy),
+                .new_rx_data(new_rx_data),
+                .rx_data(rx_data),
+	        .addr(addr)
 );
 
 endmodule

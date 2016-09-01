@@ -11,16 +11,16 @@ module message_ram (
         input byte_in,
         input [3:0] addr,
         output [7:0] data,
-        input [3:0] counter,
 	input new_rx_data,
 	input rst
 );
 
         wire [7:0] ram_wire [0:9];
-        reg [7:0] ram_data_d [0:7];
-        reg [7:0] ram_data_q [0:7];
+        reg [7:0] ram_data_d ;
+        reg [7:0] ram_data_q ;
         reg [1:0] ctr_d, ctr_q;
         reg [9:0] data_d, data_q;
+        reg state_q, state_d;
 
 /*
 * this is the element selector variable that the module needs to know 
@@ -28,6 +28,14 @@ module message_ram (
 */
 
         assign data = data_q;
+
+/*
+* I am creating a state machine, so that only one register of ram data
+* is set per new_rx_data. This may fix some stuff.
+*/
+
+localparam READY = 1,
+           N_READY = 0;
 
 /* 
 *  THIS BLOCK KEEPS ADDING ALL SIGNALS TO SENSITIVITY LIST BUT I DON'T 
@@ -38,6 +46,7 @@ module message_ram (
 * when you get a keyboard value, increment a counter and assign those 8 
 * byte (fram byte_in) to a register
 */
+
 
         always @(*) begin
 
@@ -52,20 +61,15 @@ module message_ram (
                         ram_data_d[7] = 8'b0;
                 end
 	 
-	        if (new_rx_data) begin
+	        if (state_q) begin
+
+                        ram_data_d[addr] = byte_in;
+                        state_d = N_READY;
 	 
-	                if (byte_in == 1)
-                                ram_data_d[counter - 1] = "1";
-	 
-                        else if (byte_in == 0)
-                                ram_data_d[counter - 1] = "0";
-	 
-                        else
-                                ram_data_d[counter] = ram_data_q[counter];
                 end
 
 	 
-	        else if (counter < 4'b0001) begin
+	        else if (addr < 4'b0001) begin
 	                ram_data_d[0] = ram_data_q[0];
 	                ram_data_d[1] = ram_data_q[1];
 	                ram_data_d[2] = ram_data_q[2];
@@ -100,11 +104,21 @@ module message_ram (
 
         always @(*) begin
                 if (addr > 4'd9)
-                        data_d = " ";
+                        data_d = "";
 
-                else
-                        data_d = ram_wire[addr];
+                else begin
+                        if (ram_data_q[addr] == 1)
+                                data_d = "1";
+                        else if (ram_data_q[addr] == 0)
+                                data_d = "0";
+                end
         end
+
+        always @(posedge new_rx_data)
+                state_d = READY;
+
+        always @(negedge new_rx_data)
+                state_d = N_READY;
 
         always @(posedge clk) begin
 	        if (rst) begin
@@ -136,6 +150,7 @@ module message_ram (
                         ram_data_q[0] <= ram_data_d[0];
                         data_q <= data_d;
                         ctr_q <= ctr_d;
+                        state_q <= state_d;
 	        end
         end
 

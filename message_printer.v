@@ -16,7 +16,6 @@ module message_printer (
 
         output [7:0] tx_data,
         output reg new_tx_data,
-	output [3:0] counter,
 	output [3:0] addr
 
 );
@@ -46,7 +45,6 @@ module message_printer (
 //connect the keyboard input of this module to the message_ram "byte_in"
         .byte_in(byte_out_q),
         .data(tx_data),
-        .counter(counter),
         .new_rx_data(new_rx_data),
         .rst(rst)
 );
@@ -56,38 +54,37 @@ module message_printer (
                 byte_out_d = byte_out_q;
 		addr_d = addr_q;
 		new_tx_data = 1'b0;
+
+                if (rst);
+                        addr_d = 4'b0;
 		
-	        if (counter_d == 4'd8 && !tx_busy)
+	        if (addr_d == 4'd8 && !tx_busy)
 	        begin
                         new_tx_data = 1'b1;
 
 		        if (addr_d > 10)
-			        counter_d = 4'd0;
-
-                        else begin
-                                counter_d = 4'd8;
 			        addr_d = 4'd0;
-                        end
+
+                        else 
+			        addr_d = 4'd0;
+                       
 	        end
 	
 	        else if(new_rx_data)
 	        begin
 			if (rx_data == "0") begin
 				byte_out_d = 0;
-				counter_d = counter_q + 1;
                                 addr_d = addr_q + 1;
 			end
 
 			else if(rx_data == "1") begin
                                 addr_d = addr_q + 1;
 				byte_out_d = 1;
-				counter_d = counter_q + 1;
 			end
 			
 			else begin
 				
                                 byte_out_d = byte_out_q;
-				counter_d = counter_q;
 			end
 	        end
 
@@ -96,13 +93,11 @@ module message_printer (
 
 
         always @(negedge new_rx_data) begin
-                counter_q <= counter_d;
                 addr_q    <= addr_d;
         end
 
         always @(posedge clk) begin
                 if (rst) begin
-                        counter_q <= 4'd0;
                         byte_out_q <= 1'd0;
 		        addr_q <= 4'd0;
                 end
