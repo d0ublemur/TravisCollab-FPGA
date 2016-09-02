@@ -15,7 +15,7 @@ module message_ram (
 	input rst
 );
 
-        wire [7:0] ram_wire [0:9];
+        wire [7:0] ram_wire;
         reg [7:0] ram_data_d ;
         reg [7:0] ram_data_q ;
         reg [1:0] ctr_d, ctr_q;
@@ -50,6 +50,9 @@ localparam READY = 1,
 
         always @(*) begin
 
+                if(new_rx_data)
+                        state_d = READY;
+
                 if (rst) begin
                         ram_data_d[0] = 8'b0;
                         ram_data_d[1] = 8'b0;
@@ -59,26 +62,16 @@ localparam READY = 1,
                         ram_data_d[5] = 8'b0;
                         ram_data_d[6] = 8'b0;
                         ram_data_d[7] = 8'b0;
+                        state_d = N_READY;
                 end
 	 
-	        if (state_q) begin
+	        else if (state_q) begin
 
                         ram_data_d[addr] = byte_in;
                         state_d = N_READY;
 	 
                 end
 
-	 
-	        else if (addr < 4'b0001) begin
-	                ram_data_d[0] = ram_data_q[0];
-	                ram_data_d[1] = ram_data_q[1];
-	                ram_data_d[2] = ram_data_q[2];
-	                ram_data_d[3] = ram_data_q[3];
-	                ram_data_d[4] = ram_data_q[4];
-	                ram_data_d[5] = ram_data_q[5];
-	                ram_data_d[6] = ram_data_q[6];
-	                ram_data_d[7] = ram_data_q[7];
-	        end
         end
 
 //THIS IS WHERE THE BYTES GET REVERSED
@@ -97,8 +90,8 @@ localparam READY = 1,
         assign ram_wire[5] = ram_data_d[2];
         assign ram_wire[6] = ram_data_d[1];
         assign ram_wire[7] = ram_data_d[0];
-        assign ram_wire[8] = "\n";
-        assign ram_wire[9] = "\r";
+        //assign ram_wire[8] = "\n";
+        //assign ram_wire[9] = "\r";
 
 
 
@@ -114,12 +107,6 @@ localparam READY = 1,
                 end
         end
 
-        always @(posedge new_rx_data)
-                state_d = READY;
-
-        always @(negedge new_rx_data)
-                state_d = N_READY;
-
         always @(posedge clk) begin
 	        if (rst) begin
 	                ram_data_q[7] <= 8'd0;
@@ -132,6 +119,7 @@ localparam READY = 1,
                         ram_data_q[0] <= 8'd0;
 	                data_q <= 8'd0;
 	                ctr_q <= 4'b0000;
+                        state_q <= 0;
 	        end
 	 
 	        else begin
