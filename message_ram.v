@@ -19,7 +19,7 @@ module message_ram (
         reg [7:0] ram_data_d ;
         reg [7:0] ram_data_q ;
         reg [1:0] ctr_d, ctr_q;
-        reg [9:0] data_d, data_q;
+        reg [7:0] data_d, data_q;
         reg state_q, state_d;
 
 /*
@@ -72,6 +72,19 @@ localparam READY = 1,
 	 
                 end
 
+                if (addr > 4'd9)
+                        data_d = "";
+
+                else begin
+                        if (ram_wire[addr])
+                                data_d = "1";
+                        else if (!ram_wire[addr])
+                                data_d = "0";
+
+                else
+                        data_d = "";
+                end
+
         end
 
 //THIS IS WHERE THE BYTES GET REVERSED
@@ -95,17 +108,6 @@ localparam READY = 1,
 
 
 
-        always @(*) begin
-                if (addr > 4'd9)
-                        data_d = "";
-
-                else begin
-                        if (ram_data_q[addr] == 1)
-                                data_d = "1";
-                        else if (ram_data_q[addr] == 0)
-                                data_d = "0";
-                end
-        end
 
         always @(posedge clk) begin
 	        if (rst) begin
